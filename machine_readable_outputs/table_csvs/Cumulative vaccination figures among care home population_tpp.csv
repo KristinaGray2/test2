@@ -1,0 +1,18 @@
+Category,Group,Vaccinated at 14 Apr (n),Vaccinated at 14 Apr (%),Total eligible,Previous week's vaccination coverage (%),Vaccinated over last 7d (%)
+overall,overall,80514,96.0,83888,95.6,0.4
+Sex,F,57302,96.3,59500,95.9,0.4
+Sex,M,23212,95.2,24381,94.8,0.4
+Age band,65-69,4389,92.3,4753,91.8,0.5
+Age band,70-74,6769,94.0,7203,93.4,0.6
+Age band,75-79,9394,95.4,9849,94.9,0.5
+Age band,80-84,14049,96.2,14609,95.8,0.4
+Age band,85-89,18865,96.6,19523,96.3,0.3
+Age band,90+,27048,96.8,27951,96.4,0.4
+Ethnicity (broad categories),Black,399,86.4,462,84.8,1.6
+Ethnicity (broad categories),Mixed,203,90.6,224,90.6,0.0
+Ethnicity (broad categories),Other,343,94.2,364,94.2,0.0
+Ethnicity (broad categories),South Asian,623,91.8,679,91.8,0.0
+Ethnicity (broad categories),Unknown,2037,93.9,2170,93.2,0.7
+Ethnicity (broad categories),White,76909,96.1,79996,95.8,0.3
+Dementia,no,36421,94.9,38395,94.4,0.5
+Dementia,yes,44093,96.9,45486,96.6,0.3
