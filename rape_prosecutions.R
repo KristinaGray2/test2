@@ -1,9 +1,17 @@
+###Criminal Justice System Statistics
+#https://www.gov.uk/government/statistics/criminal-justice-system-statistics-quarterly-december-2020
+
+#Load libraries
 pacman::p_load(tidyverse, rdrop2, lubridate, purrr, jsonlite, stringr, bbmap,bbplot2,readxl, sf,shadowtext,rgdal,gridExtra, scales, R.utils, googlesheets4, gridExtra,ggpubr, WriteXLS, forcats, janitor, zoo, httr, ggtext, ggrepel, urltools)
 library(base)
+
+#############################################################
+#All court data - prosecutions and convictions
+
 all_courts <- read_csv("~/Downloads/all_courts_2020.csv")
 
+#Only rape offences and those committed by a person rather than a company
 rape_offences <- all_courts %>% filter(grepl("Rape", Offence)) %>% filter(`Person/other` == "01: Person")
-
 
 rape_offences_year <- rape_offences %>% select(c(Year, `Proceeded against`, Sentenced)) %>% group_by(Year) %>% summarise_all(sum) %>%
   mutate(percent = Sentenced/`Proceeded against`)
@@ -167,5 +175,190 @@ finalise_plot(
   width_pixels = 1200,
   save_filepath = paste0(
     "~/Downloads/custody_length_graph.png"
+  )
+)
+
+##################################################################
+###Areas based on where the offence is dealt with rather than where the offence was committed - add as a footnote?
+
+#By police force area - prosecutions and convictions
+pfa <- read_csv("~/Downloads/courts-by-pfa-2020.csv")
+
+pa_rape <- pfa %>% filter(grepl("Rape", Offence)) %>% filter(`Type of Defendant` == "01: Person")
+
+prosecutions <- pa_rape %>% filter(`Court Type` == "02: Magistrates Court") %>% group_by(`Police Force Area`, `Year of Appearance`) %>% summarise(prosecutions=n())
+convictions <- pa_rape %>% filter(`Convicted/Not Convicted` == "01: Convicted") %>% group_by(`Police Force Area`, `Year of Appearance`) %>%
+  summarise(convictions =n())
+
+#Only do the last 5 years
+conviction_ratio <- left_join(prosecutions,convictions, by =c("Police Force Area", "Year of Appearance")) %>%
+  mutate(convictions = replace_na(convictions, 0)) %>% filter(`Year of Appearance` > "2015") %>%
+  select(!(`Year of Appearance`)) %>% summarise_all(sum) %>% mutate(percent = convictions/prosecutions) %>% arrange(percent)
+
+conviction_ratio <-conviction_ratio[order(conviction_ratio$percent),]
+
+ggplot(tips2, aes(x = reorder(day, -perc), y = perc)) + geom_bar(stat = "identity")
+
+conviction_rate_plot <- ggplot(conviction_ratio,
+                              aes(x = reorder(`Police Force Area`, percent),
+                                  y = percent,
+                              )) +
+  #geom_col(fill = '#D1700E') +
+  geom_bar(stat = "identity", fill = '#D1700E') +
+  coord_flip()+
+  geom_hline(yintercept = 0, size = 1, colour="#333333") +
+  scale_y_continuous(labels=scales::percent, limits =c(0,1)) +
+  bbc_style() +
+  reith_style() +
+  #scale_fill_manual(values = rev(bbc_pal('main', 14))) +
+  labs(title="Conviction rate between 30-67% by Police Force Area",
+       subtitle = "Proportion of convictions for rape prosecutions in 2016 - 2020") +
+  theme(strip.text = element_text(margin = margin(b= 0.5, unit = 'cm')),
+        axis.line.x = element_blank(),
+        axis.ticks.x =element_blank(),
+        axis.text.x = element_blank(),
+        panel.spacing.x = unit(0.5, 'cm'),
+        panel.grid = element_blank(),
+        plot.margin = margin(l = 0.2, r = 1.2, unit = 'cm')) +
+geom_label(
+  aes(
+    x = `Police Force Area`,
+    y = percent,
+    label = paste0(format(round(percent*100)),"%")),
+  hjust = 1,
+  vjust = 0.5,
+  colour = '#ffffff',
+  fill = NA,
+  label.size = NA,
+  size = 7,
+  fontface = "bold")
+
+conviction_rate_plot
+
+finalise_plot(
+  conviction_rate_plot,
+  source = paste0('Source: Criminal Justice System Statistics, Ministry of Justice'),
+  tinify_file = F,
+  width_pixels = 1200,
+  height_pixels = 3000,
+  save_filepath = paste0(
+    "~/Downloads/conviction_by_PFA.png"
+  )
+)
+
+
+#####################################################
+#Remanded by police prior to appearing at court
+
+remands_police <- read_csv("~/Downloads/remands_magistrates_2020.csv")
+
+remands_police_rape <- remands_police %>% filter(grepl("Rape", Offence)) %>%
+  group_by(`Year of Appearance`, `Remand status with Police`) %>% summarise(count = sum(Count))
+
+remands_police_rape_per <- remands_police_rape  %>% mutate(percent = count/sum(count))
+
+remands_police_rape_per_plot <- ggplot(remands_police_rape_per,
+                                   aes(x = `Year of Appearance`,
+                                       y = percent,
+                                       group = `Remand status with Police`,
+                                       fill = `Remand status with Police`,
+                                   )) +
+  #geom_col(fill = '#D1700E') +
+  geom_bar(position = "dodge", stat = "identity") +
+  #coord_flip()+
+  geom_hline(yintercept = 0, size = 1, colour="#333333") +
+  scale_y_continuous(labels=scales::percent, limits =c(0,1)) +
+  bbc_style() +
+  reith_style() +
+  scale_fill_manual(values = rev(bbc_pal('main', 3))) +
+  labs(title="Not remanded after charge has increased since 2017",
+       subtitle = "Defendants’ remand status with Police prior to appearing at magistrates' court") +
+  theme(strip.text = element_text(margin = margin(b= 0.5, unit = 'cm')),
+        axis.line.x = element_blank(),
+        #axis.ticks.x =element_blank(),
+        #axis.text.x = element_blank(),
+        panel.spacing.x = unit(0.5, 'cm'),
+        panel.grid = element_blank(),
+        plot.margin = margin(l = 0.2, r = 1.2, unit = 'cm'))
+# geom_label(
+#   aes(
+#     x = `Police Force Area`,
+#     y = percent,
+#     label = paste0(format(round(percent*100)),"%")),
+#   hjust = 1,
+#   vjust = 0.5,
+#   colour = '#ffffff',
+#   fill = NA,
+#   label.size = NA,
+#   size = 7,
+#   fontface = "bold")
+
+remands_police_rape_per_plot
+
+finalise_plot(
+  remands_police_rape_per_plot,
+  source = paste0('Source: Criminal Justice System Statistics, Ministry of Justice'),
+  tinify_file = F,
+  width_pixels = 900,
+  save_filepath = paste0(
+    "~/Downloads/remands_police.png"
+  )
+)
+
+##########################################################
+#Remands at the Crown Court
+
+remands_cc <- read_csv("~/Downloads/remands_CC_2020.csv")
+
+remands_cc_rape <- remands_cc %>% filter(grepl("Rape", Offence)) %>% filter(category == "01: Person") %>%
+  group_by(`Year of Appearance`, `Remand status at the Crown Court`) %>% summarise(count = sum(count))
+
+remands_cc_rape_per <- remands_cc_rape  %>% mutate(percent = count/sum(count))
+
+remands_cc_rape_per_plot <- ggplot(remands_cc_rape_per,
+                               aes(x = `Year of Appearance`,
+                                   y = percent,
+                                   group = `Remand status at the Crown Court`,
+                                   fill = `Remand status at the Crown Court`,
+                               )) +
+  #geom_col(fill = '#D1700E') +
+  geom_bar(position = "dodge", stat = "identity") +
+  #coord_flip()+
+  geom_hline(yintercept = 0, size = 1, colour="#333333") +
+  scale_y_continuous(labels=scales::percent, limits =c(0,1)) +
+  bbc_style() +
+  reith_style() +
+  scale_fill_manual(values = rev(bbc_pal('main', 3))) +
+  labs(title="Custody increased from 2019",
+       subtitle = "Remanded status for defendants tried or sentenced at the Crown Court") +
+  theme(strip.text = element_text(margin = margin(b= 0.5, unit = 'cm')),
+        axis.line.x = element_blank(),
+        #axis.ticks.x =element_blank(),
+        #axis.text.x = element_blank(),
+        panel.spacing.x = unit(0.5, 'cm'),
+        panel.grid = element_blank(),
+        plot.margin = margin(l = 0.2, r = 1.2, unit = 'cm'))
+  # geom_label(
+  #   aes(
+  #     x = `Police Force Area`,
+  #     y = percent,
+  #     label = paste0(format(round(percent*100)),"%")),
+  #   hjust = 1,
+  #   vjust = 0.5,
+  #   colour = '#ffffff',
+  #   fill = NA,
+  #   label.size = NA,
+  #   size = 7,
+  #   fontface = "bold")
+
+remands_cc_rape_per_plot
+
+finalise_plot(
+  remands_cc_rape_per_plot,
+  source = paste0('Source: Criminal Justice System Statistics, Ministry of Justice'),
+  tinify_file = F,
+  width_pixels = 1000,
+  save_filepath = paste0(
+    "~/Downloads/remands_cc.png"
   )
 )
