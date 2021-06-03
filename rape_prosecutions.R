@@ -1,5 +1,6 @@
 ###Criminal Justice System Statistics
 #https://www.gov.uk/government/statistics/criminal-justice-system-statistics-quarterly-december-2020
+#Data downloaded by zip folders - mac finds the folders too large to open so download them via the terminal to obtain the CSVs
 
 #Load libraries
 pacman::p_load(tidyverse, rdrop2, lubridate, purrr, jsonlite, stringr, bbmap,bbplot2,readxl, sf,shadowtext,rgdal,gridExtra, scales, R.utils, googlesheets4, gridExtra,ggpubr, WriteXLS, forcats, janitor, zoo, httr, ggtext, ggrepel, urltools)
