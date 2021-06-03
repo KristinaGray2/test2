@@ -64,6 +64,7 @@ finalise_plot(
 #########################################################################
 #Sentence outcomes
 
+#Combine other sentence outcomes such as fines and compensation
 rape_outcomes <- rape_offences %>%  mutate(Other == `Absolute Discharge` + `Conditional Discharge` +
                                              `Fine` + `Compensation (primary disposal)` +`Total Otherwise Dealt With`) %>%
   select(c(Year,`Total Community Sentence`,`Suspended Sentence`, `Total Immediate Custody`, `Other`)) %>%
@@ -117,6 +118,8 @@ finalise_plot(
 
 #####################################
 #Custody by length
+
+#Combine custody length into categories for the graph
 custody_length <- rape_offences %>% select(c(Year, starts_with("Custody")))%>% pivot_longer(!(Year)) %>%
   mutate(custody = case_when(name %in% c( "Custody - Up to and including 1 month", "Custody - Over 1 month and up to and including 2 months" ,
                               "Custody - Over 2 months and up to and including 3 months", "Custody - More than 3 months and under 6 months" ,
@@ -187,6 +190,7 @@ pfa <- read_csv("~/Downloads/courts-by-pfa-2020.csv")
 
 pa_rape <- pfa %>% filter(grepl("Rape", Offence)) %>% filter(`Type of Defendant` == "01: Person")
 
+#Prosecutions are all cases at magistrates'
 prosecutions <- pa_rape %>% filter(`Court Type` == "02: Magistrates Court") %>% group_by(`Police Force Area`, `Year of Appearance`) %>% summarise(prosecutions=n())
 convictions <- pa_rape %>% filter(`Convicted/Not Convicted` == "01: Convicted") %>% group_by(`Police Force Area`, `Year of Appearance`) %>%
   summarise(convictions =n())
@@ -253,6 +257,7 @@ finalise_plot(
 
 remands_police <- read_csv("~/Downloads/remands_magistrates_2020.csv")
 
+#Filter by rape offences
 remands_police_rape <- remands_police %>% filter(grepl("Rape", Offence)) %>%
   group_by(`Year of Appearance`, `Remand status with Police`) %>% summarise(count = sum(Count))
 
@@ -311,6 +316,7 @@ finalise_plot(
 
 remands_cc <- read_csv("~/Downloads/remands_CC_2020.csv")
 
+#Filter by rape offences
 remands_cc_rape <- remands_cc %>% filter(grepl("Rape", Offence)) %>% filter(category == "01: Person") %>%
   group_by(`Year of Appearance`, `Remand status at the Crown Court`) %>% summarise(count = sum(count))
 

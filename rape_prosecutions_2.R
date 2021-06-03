@@ -3,11 +3,13 @@
 #Latest quarterly publication https://www.gov.uk/government/statistics/criminal-court-statistics-quarterly-october-to-december-2020
 #Latest annual publication https://www.gov.uk/government/statistics/criminal-court-statistics-quarterly-january-to-march-2020
 #CSVs are downloaded from the transparency file zip folders
+#The quarterly publication provides data up to 2020 Q4 but the annual publication is required for timeliness by offence type csv
 
 ############################################################
 #Effectiveness of Crown Court trials
 effectiveness <- read_csv("~/Downloads/trial_2020Q4.csv")
 
+#Vacated trials not included in the percentage total
 trials_effective <- effectiveness %>% mutate(value = replace_na(value,0)) %>% group_by(year,offence_group, trial_effectiveness) %>%
   summarise(count=sum(value)) %>% filter(year == "2019") %>% filter(!trial_effectiveness == "4. Vacated trial") %>% mutate(percent=count/sum(count)) %>%
   filter(!(offence_group %in% c("13: Unknown", "13: Not known")))
@@ -67,6 +69,7 @@ finalise_plot(
 ###By reason
 reasons <- effectiveness %>% group_by(reason) %>% summarise(count=n())
 
+#Group some of the reasons for ease
 reasons_grouped <- effectiveness %>% mutate(reason_group = case_when(
 
   reason %in% c("01. Cracked Reason: Acceptable guilty plea(s) entered late, offered for the first time by the defence",
